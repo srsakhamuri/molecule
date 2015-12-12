@@ -55,7 +55,8 @@ class Molecule(object):
             return  # exits program
 
         # merge in molecule.yml
-        self._config.merge_molecule_file()
+        molecule_file_path = self._args.get('--molecule-file-path')
+        self._config.merge_molecule_file(molecule_file=molecule_file_path)
 
         # concatentate file names and paths within config so they're more convenient to use
         self._config.build_easy_paths()
@@ -101,8 +102,38 @@ class Molecule(object):
 
         # updates instances config with full machine names
         self._config.populate_instance_names(self._env['MOLECULE_PLATFORM'])
+
+        if molecule_file_path:
+            rel_path = os.path.dirname(molecule_file_path)
+            self._fix_relative_paths_in_config(rel_path)
+
         if self._args['--debug']:
             print yaml.dump(self._config.config, indent=4)
+
+    def _fix_relative_paths_in_config(self, rel_path):
+        """Fix the paths in the config items.
+
+        If the molecule file isn't in the current dir, fix the paths
+        in the config with the relative path of the molecule file.
+        """
+        path_config_to_update = [
+            # Dict to update, list of keys to update.
+            [self._env, ['VAGRANT_VAGRANTFILE']],
+            [self._config.config['ansible'], ['inventory_file', 'playbook', 'config_file']],
+            [
+                self._config.config['ansible']['raw_env_vars'],
+                [
+                    'ANSIBLE_CONFIG', 'ANSIBLE_VAR_DEFAULTS_GLOB', 'ANSIBLE_FILTER_PLUGINS',
+                    'ANSIBLE_ROLES_PATH', 'ANSIBLE_LOOKUP_PLUGINS', 'ANSIBLE_VARS_PLUGINS',
+                    'VAGRANT_VAGRANTFILE', 'ANSIBLE_LIBRARY'
+                ],
+            ],
+        ]
+        for dictionary, keys in path_config_to_update:
+            for key in keys:
+                if key in dictionary:
+                    dictionary[key] = utilities.prefix_with_rel_path(
+                        dictionary[key], rel_path)
 
     def _rubocop(self):
         try:

@@ -71,7 +71,6 @@ class Config(object):
         """
         if molecule_file is None:
             molecule_file = self.config['molecule']['molecule_file']
-
         if not os.path.isfile(molecule_file):
             error = '\n{}Unable to find {}. Exiting.{}'
             print(error.format(Fore.RED, self.config['molecule']['molecule_file'], Fore.RESET))

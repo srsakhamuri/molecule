@@ -21,6 +21,7 @@
 from __future__ import print_function
 
 import copy
+import os
 import sys
 
 from jinja2 import Environment
@@ -144,3 +145,15 @@ def print_stderr(line):
     """
     print(line, file=sys.stderr, end='')
     sys.stderr.flush()
+
+
+def prefix_with_rel_path(path, prefix_path=None):
+    """
+    Prefix the given path with a relative path.
+    If the original path is an absolute path, return it
+    as is.
+    """
+    if prefix_path is None or path.startswith(os.sep):
+        return path
+    else:
+        return os.path.join(prefix_path, path)

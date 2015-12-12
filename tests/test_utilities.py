@@ -162,3 +162,32 @@ class TestUtilities(testtools.TestCase):
         expected = 'test-01-rhel-7'
         actual = utilities.format_instance_name('test-01', 'rhel-7', instances)
         self.assertEqual(expected, actual)
+
+
+class TestPrefixWithRelPath(testtools.TestCase):
+
+    def get_random_path(self, absolute=False):
+        """Return a random filesystem path (e.g. 'a/b/c')."""
+        path_elems = [self.getUniqueString() for _ in range(1, 3)]
+        if absolute:
+            first_char = os.sep
+        else:
+            first_char = ''
+        return first_char + os.path.join(*path_elems)
+
+    def test_returns_unchanged_path_with_none_prefix(self):
+        path = self.get_random_path()
+        result_path = utilities.prefix_with_rel_path(path, None)
+        self.assertEqual(path, result_path)
+
+    def test_returns_unchanged_path_if_absolute(self):
+        path = self.get_random_path(absolute=True)
+        prefix_path = self.get_random_path()
+        result_path = utilities.prefix_with_rel_path(path, prefix_path)
+        self.assertEqual(path, result_path)
+
+    def test_returns_prefixed_path_if_relative_path(self):
+        path = self.get_random_path(absolute=False)
+        prefix_path = self.get_random_path()
+        result_path = utilities.prefix_with_rel_path(path, prefix_path)
+        self.assertEqual(result_path, os.path.join(prefix_path, path))

@@ -19,14 +19,15 @@
 #  THE SOFTWARE.
 """
 Usage:
-  molecule create      [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule converge    [--platform=<platform>] [--provider=<provider>] [--tags=<tag1,tag2>] [--debug] [--fast]
-  molecule idempotence [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule test        [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule verify      [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule destroy     [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule status      [--platform=<platform>] [--provider=<provider>] [--debug]
-  molecule list        [--platform=<platform>] [--provider=<provider>] [--debug]
+  molecule create      [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule converge    [--platform=<platform>] [--provider=<provider>] [--tags=<tag1,tag2>] [--debug]
+                       [--molecule-file-path=<path>] [--fast]
+  molecule idempotence [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule test        [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule verify      [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule destroy     [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule status      [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
+  molecule list        [--platform=<platform>] [--provider=<provider>] [--debug] [--molecule-file-path=<path>]
   molecule login <host>
   molecule init  <role>
   molecule -v | --version
@@ -45,12 +46,13 @@ Commands:
    init        creates the directory structure and files for a new Ansible role compatible with molecule
 
 Options:
-   -h, --help             shows this screen
-   -v, --version          shows the version
-   --platform <platform>  specify a platform
-   --provider <provider>  specify a provider
-   --tags <tag1,tag2>     comma separated list of ansible tags to target
-   --debug                get more detail
+   -h, --help                     shows this screen
+   -v, --version                  shows the version
+   --platform <platform>          specify a platform
+   --provider <provider>          specify a provider
+   --tags <tag1,tag2>             comma separated list of ansible tags to target
+   --debug                        get more detail
+   --molecule-file-path <path>    optional path to molecule.yml
 """
 
 import sys
