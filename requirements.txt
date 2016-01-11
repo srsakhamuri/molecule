@@ -9,3 +9,4 @@ python-vagrant==0.5.10
 PyYAML==3.11
 sh==1.11
 testinfra
+-e git+git@github.com:metacloud/vmetapod#egg=vmetapod
