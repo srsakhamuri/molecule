@@ -23,7 +23,8 @@ import os
 
 import vagrant
 
-import utilities
+from molecule import utilities
+from vmetapod import environment
 
 
 class InvalidProviderSpecified(Exception):
@@ -35,10 +36,10 @@ class InvalidPlatformSpecified(Exception):
 
 
 def get_provisioner(molecule):
-    if 'vagrant' in molecule._config.config:
-        return VagrantProvisioner(molecule)
-    elif 'proxmox' in molecule._config.config:
+    if 'proxmox' in molecule._config.config:
         return ProxmoxProvisioner(molecule)
+    elif 'vagrant' in molecule._config.config:
+        return VagrantProvisioner(molecule)
     else:
         return None
 
@@ -293,5 +294,71 @@ class VagrantProvisioner(BaseProvisioner):
 
 # Place holder for Proxmox, partially implemented
 class ProxmoxProvisioner(BaseProvisioner):
-    def __init__(self):
-        super(ProxmoxProvisioner, self).__init__()
+    def __init__(self, molecule):
+        super(ProxmoxProvisioner, self).__init__(molecule)
+        config = molecule._config.config['proxmox']
+        self._proxmox = environment.Environment(config)
+        self._provider = self._get_provider(config['provider']['type'])
+        self._platform = self._get_platform(config['provider']['host_image'])
+        molecule._env['MOLECULE_PLATFORM'] = self._platform
+
+    def _get_platform(self, image_url):
+        return {'name': image_url, 'box': image_url, 'box_url': image_url}
+
+    def _get_provider(self, name):
+        return {'name': name, 'type': name, 'options': {}}
+
+    @property
+    def name(self):
+        return 'proxmox'
+
+    @property
+    def instances(self):
+        return self.m._config.config['proxmox']['cluster']['nodes']
+
+    @property
+    def default_provider(self):
+        return self._provider
+
+    @property
+    def default_platform(self):
+        return self._platform
+
+    @property
+    def provider(self):
+        return self._provider
+
+    @property
+    def platform(self):
+        return self._platform
+
+    @property
+    def valid_providers(self):
+        return [self._provider]
+
+    @property
+    def valid_platforms(self):
+        return [self._platform]
+
+    @property
+    def ssh_config_file(self):
+        return '.vagrant/ssh-config'
+
+    def up(self, no_provision=True):
+        self._proxmox.create_env()
+
+    def destroy(self):
+        self._proxmox.destroy_env()
+
+
+    def halt(self):
+        return
+
+    def status(self):
+        return
+
+    def conf(self, vm_name=None, ssh_config=False):
+        if ssh_config:
+            return self._vagrant.ssh_config(vm_name=vm_name)
+        else:
+            return self._vagrant.conf(vm_name=vm_name)
