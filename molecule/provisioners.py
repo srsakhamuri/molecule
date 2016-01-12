@@ -350,12 +350,11 @@ class ProxmoxProvisioner(BaseProvisioner):
     def destroy(self):
         self._proxmox.destroy_env()
 
-
     def halt(self):
         return
 
     def status(self):
-        return
+        return self._proxmox.provider.list_vms()
 
     def conf(self, vm_name=None, ssh_config=False):
         if ssh_config:
