@@ -372,6 +372,9 @@ class Login(AbstractCommand):
             ssh_args = [conf['HostName'], conf['User'], conf['Port'], conf['IdentityFile'],
                         ' '.join(self.molecule._config.config['molecule']['raw_ssh_args'])]
             ssh_cmd = 'ssh {} -l {} -p {} -i {} {}'
+
+            if conf['ProxyCommand']:
+                ssh_cmd += ' -o ProxyCommand=\"' + conf['ProxyCommand'] + '\"'
         except CalledProcessError:
             # gets appended to python-vagrant's error message
             conf_format = [Fore.RED, self.molecule._args['<host>'], Fore.YELLOW, Fore.RESET]

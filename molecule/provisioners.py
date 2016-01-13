@@ -19,6 +19,7 @@
 #  THE SOFTWARE.
 
 import abc
+import collections
 import os
 
 import vagrant
@@ -300,7 +301,9 @@ class ProxmoxProvisioner(BaseProvisioner):
         self._proxmox = environment.Environment(config)
         self._provider = self._get_provider(config['provider']['type'])
         self._platform = self._get_platform(config['provider']['host_image'])
-        molecule._env['MOLECULE_PLATFORM'] = self._platform
+        self._instances = self._get_instances(config['cluster']['nodes'])
+        molecule._env['MOLECULE_PLATFORM'] = \
+            os.path.basename(self._platform['name'])
 
     def _get_platform(self, image_url):
         return {'name': image_url, 'box': image_url, 'box_url': image_url}
@@ -308,13 +311,23 @@ class ProxmoxProvisioner(BaseProvisioner):
     def _get_provider(self, name):
         return {'name': name, 'type': name, 'options': {}}
 
+    def _get_instances(self, nodes):
+        instances = []
+        for node in self.m._config.config['proxmox']['cluster']['nodes']:
+            instances.append({
+                'name': node['hostname'],
+                'options': {'append_platform_to_hostname': False}
+            })
+
+        return instances
+
     @property
     def name(self):
         return 'proxmox'
 
     @property
     def instances(self):
-        return self.m._config.config['proxmox']['cluster']['nodes']
+        return self._instances
 
     @property
     def default_provider(self):
@@ -351,13 +364,36 @@ class ProxmoxProvisioner(BaseProvisioner):
         self._proxmox.destroy_env()
 
     def halt(self):
-        return
+        for instance in self.instances:
+            return self._proxmox.provider.stop_vm(instance['name'])
 
     def status(self):
-        return self._proxmox.provider.list_vms()
+        Status = collections.namedtuple('Status', 'name state provider')
+        instances = [item['name'] for item in self.instances]
+        return [Status(name=v['name'],
+                       state=v['status'],
+                       provider='proxmox')
+                for k, v in self._proxmox.provider.list_vms().iteritems()
+                if k in instances]
 
     def conf(self, vm_name=None, ssh_config=False):
+        ip_mapping = self._proxmox.get_management_ips()
+
         if ssh_config:
-            return self._vagrant.ssh_config(vm_name=vm_name)
+            return ip_mapping
         else:
-            return self._vagrant.conf(vm_name=vm_name)
+            proxmox_user = \
+                self.m._config.config['proxmox']['provider']['proxmox_user']
+            proxmox_host = \
+                self.m._config.config['proxmox']['provider']['proxmox_host']
+            proxy_command = \
+                'ssh -q -W %s:%d %s@%s' % (ip_mapping[vm_name],
+                                           22, proxmox_user, proxmox_host)
+            return {
+                'Host': vm_name,
+                'HostName': ip_mapping[vm_name],
+                'User': 'admin',
+                'Port': '22',
+                'IdentityFile': '~/.ssh/id_rsa',
+                'ProxyCommand': proxy_command,
+            }
